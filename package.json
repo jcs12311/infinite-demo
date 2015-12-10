@@ -1,0 +1,21 @@
+{
+  "name": "learn-react-code",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "webpack-dev-server"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "react": "^0.14.3",
+    "react-dom": "^0.14.3"
+  },
+  "devDependencies": {
+    "babel-core": "^5.8.34",
+    "babel-loader": "^5.4.0",
+    "webpack": "^1.12.9"
+  }
+}
