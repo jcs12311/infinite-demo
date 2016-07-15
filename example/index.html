@@ -5,6 +5,21 @@
     <title>Webpack App</title>
   </head>
   <body>
-    <script src="./dist.js"></script> 
+    
+    <div class="list"></div>
+
+    <div class="template" style="display:none;">
+      <a class="news" href="${url}">
+        <img src="${imgsrc}" />
+        <p class="title">${title}</p>
+        <small class="digest">${digest}</small>
+      </a>
+    </div>
+    <script src="./bundle.js"></script> 
+    <script type="text/javascript">
+    $(function(){
+      new App();
+    })
+    </script>
   </body>
 </html>

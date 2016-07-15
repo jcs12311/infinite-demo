@@ -3,10 +3,13 @@ var HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
 	context: path.join(__dirname, 'example'),
-	entry: "./app.js",
+	entry: {
+		"app": "./app.js",
+		"react_app": "./react_app.js"
+	},
 	output: {
 		path: path.resolve(__dirname, 'dist'),
-		filename: "./bundle.js"
+		filename: "[name].bundle.js"
 	},
 	resolve: {
   		extensions: ['', '.js', '.jsx']
@@ -28,12 +31,21 @@ module.exports = {
 			{
 				test: /\.scss$/,
 				loader: 'style!css?sourceMap!postcss!sass?sourceMap'
-			}
-		]
+			},
+      {
+        test: /\.html$/,
+        loader: 'html'
+      },
+    ]
 	},
 	plugins: [
 		new HtmlWebpackPlugin({
 			template: path.join(__dirname, 'example/index.html')
-		})
+		}),
+		new HtmlWebpackPlugin({  // Also generate a test.html
+      filename: 'react_index.html',
+      inject: false,
+      template: path.join(__dirname, 'example/react_index.html')
+    })
 	]
 }
