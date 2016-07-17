@@ -4,8 +4,14 @@ import $ from 'jquery';
 
 
 class News extends React.Component {
+
+    // shouldComponentUpdate(nextProps) {
+    //   const shouldUpdate =  JSON.stringify(nextProps.news) !== JSON.stringify(this.props.news);
+    //   return shouldUpdate;
+    // }
+
     render() {
-      const { url, imgsrc, title, digest } = this.props;
+      const { url, imgsrc, title, digest } = this.props.news;
         return (
             <a className="news" href={url}>
               <img src={imgsrc} />
@@ -27,7 +33,22 @@ class App extends React.Component {
     }
 
     componentDidMount() {
-      this.getList();  
+      this.getList();
+      $(window).on('scroll', ()=>{
+        let bufferPx = 200;
+        let oh = document.body.offsetHeight;
+        if(( oh > window.innerHeight ) && ( window.scrollY + window.innerHeight + bufferPx >= oh )){
+          this.getList();
+        }
+      })
+    }
+
+    componentWillUpdate(){
+      this.lastD = Date.now();
+    }
+
+    componentDidUpdate() {
+      console.log('did update', Date.now()-this.lastD);
     }
 
     getList() {
@@ -47,7 +68,7 @@ class App extends React.Component {
           let news = data.BBM54PGAwangning;
 
           this.setState({
-            loading: false,
+              loading: false,
             p: p + pageSize,
             newsData: newsData.concat(news)
           });
@@ -62,9 +83,7 @@ class App extends React.Component {
             <div className="list">
               {
                 newsData.map((news, index)=>{
-                  const { url, imgsrc, title, digest } = news;
-                  return <News key={index} url={url} imgsrc={imgsrc}
-                    title={title} digest={digest} />
+                  return <News key={index} news={news} />
                 })
               }
             </div>

@@ -3,8 +3,8 @@ let template = require('lodash.template');
 window.$ = $;
 
 function App(){
-  // init
-  this.loading = false; // fetching data
+
+  this.loading = false;
   this.p = 1;
   this.pageSize = 20;
 
@@ -31,11 +31,13 @@ function App(){
   }
 
   let fillList = ($list, $tmlItem, data) => {
+    console.time(`render ${this.pageSize} list`);
     for(let i = 0; i < data.length; i++) {
       let compiled = template($tmlItem.html());
       let text = compiled(data[i]);
       $list.append($(text));
     }
+    console.timeEnd(`render ${this.pageSize} list`);
   }
 
   getList();
