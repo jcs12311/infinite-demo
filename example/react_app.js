@@ -5,10 +5,10 @@ import $ from 'jquery';
 
 class News extends React.Component {
 
-    // shouldComponentUpdate(nextProps) {
-    //   const shouldUpdate =  JSON.stringify(nextProps.news) !== JSON.stringify(this.props.news);
-    //   return shouldUpdate;
-    // }
+    shouldComponentUpdate(nextProps) {
+      const shouldUpdate =  JSON.stringify(nextProps.news) !== JSON.stringify(this.props.news);
+      return shouldUpdate;
+    }
 
     render() {
       const { url, imgsrc, title, digest } = this.props.news;
@@ -43,12 +43,14 @@ class App extends React.Component {
       })
     }
 
-    componentWillUpdate(){
-      this.lastD = Date.now();
+    componentWillUpdate(nextProps, nextState){
+      if(nextState.newsData.length > this.state.newsData.length) {
+        console.time(`render ${this.props.pageSize} list`);
+      }
     }
 
-    componentDidUpdate() {
-      console.log('did update', Date.now()-this.lastD);
+    componentDidUpdate(nextProps) {
+      console.timeEnd(`render ${this.props.pageSize} list`);
     }
 
     getList() {
@@ -69,8 +71,8 @@ class App extends React.Component {
 
           this.setState({
               loading: false,
-            p: p + pageSize,
-            newsData: newsData.concat(news)
+              p: p + pageSize,
+              newsData: newsData.concat(news)
           });
         }
         window.artiList = cb;
@@ -95,7 +97,7 @@ App.propTypes = {
 }
 
 App.defaultProps = {
-  pageSize: 20
+  pageSize: 100
 }
 
 ReactDOM.render(<App />, 

@@ -2,11 +2,12 @@ import $ from 'jquery';
 let template = require('lodash.template');
 window.$ = $;
 
+
 function App(){
 
   this.loading = false;
   this.p = 1;
-  this.pageSize = 20;
+  this.pageSize = 100;
 
   let getList = () => {
     if(!this.loading){

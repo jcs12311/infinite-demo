@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <title>Webpack App</title>
   </head>
+  <script src="http://192.168.1.32:3333/node_modules/socket.io-client/socket.io.js"></script>
+<script src="http://192.168.1.32:3333/web-console.js"></script>
+<script type="text/javascript">
+    new WebConsole({
+        host: "http://192.168.1.32:3333",
+        methods: ['log', 'error', 'warn', 'time', 'timeEnd']// default is ['log', 'error', 'warn']
+    })
+</script>
   <body>
     
     <div class="list"></div>
