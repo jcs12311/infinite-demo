@@ -5,7 +5,8 @@ module.exports = {
 	context: path.join(__dirname, 'example'),
 	entry: {
 		"app": "./app.js",
-		"react_app": "./react_app.js"
+    "react_app": "./react_app.js",
+		"react_canvas": "./react_canvas.js"
 	},
 	output: {
 		path: path.resolve(__dirname, 'dist'),
@@ -36,16 +37,25 @@ module.exports = {
         test: /\.html$/,
         loader: 'html'
       },
+    ],
+    postLoaders: [
+      { loader: "transform?brfs" }
     ]
 	},
 	plugins: [
 		new HtmlWebpackPlugin({
+      inject: false,
 			template: path.join(__dirname, 'example/index.html')
 		}),
-		new HtmlWebpackPlugin({  // Also generate a test.html
+		new HtmlWebpackPlugin({
       filename: 'react_index.html',
       inject: false,
       template: path.join(__dirname, 'example/react_index.html')
-    })
+    }),
+    new HtmlWebpackPlugin({
+      filename: 'react_canvas.html',
+      inject: false,
+      template: path.join(__dirname, 'example/react_canvas.html')
+    }),
 	]
 }
