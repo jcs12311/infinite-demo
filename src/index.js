@@ -79,22 +79,22 @@ const ListItemWrapper = Component => {
 class ListItem extends React.Component {
 
   shouldComponentUpdate(nextProps){
-    console.log(this.rendered, '===');
-    if(!this.rendered){
-      this.rendered = this.props.show;
-    }
-    return !this.rendered || nextProps.show !== this.props.show
+    // just render once if item already show
+    this.rendered = this.rendered || this.props.show;
+    return !this.rendered && nextProps.show !== this.props.show
   }
 
   render() {
+    /**
+     * style for position
+     */
     const { show, style } = this.props;
-    if(show) {
-      return <div style={style}>
-        { this.props.children }
-      </div>
-    } else {
-      return null
+    if(!show) {
+      return null;
     }
+    return <div style={style}>
+      { this.props.children }
+    </div>
   }
 }
 
@@ -104,12 +104,12 @@ class ListView extends React.Component {
         this.state = {
             renderIndexes:[]
         }
-        this._getItemsOnViewPortIndex = this._getItemsOnViewPortIndex.bind(this);
+        this._updateRenderIndexes = this._updateRenderIndexes.bind(this);
     }
 
-    _getItemsOnViewPortIndex() {
+    _updateRenderIndexes() {
       let result = [];
-      const { items, getItemHeight } = this.props;
+      const { items, getItemHeight, bound } = this.props;
       let itemTop = 0, // current item top edge 
           itemBottom = 0; // current item bottom edge 
       let scrollTop = document.body.scrollTop,
@@ -117,11 +117,20 @@ class ListView extends React.Component {
       for(let i = 0; i < items.length; i++) {
         itemTop = itemBottom;
         itemBottom += getItemHeight(i);
-        if(itemTop < scrollTop+innerHeight) {
-          if(itemBottom > scrollTop){
+        /** 
+         * item top edge was over the viewport bottom
+         * item bottom dege was below the viewport top
+         * that means item in the viewport
+         */
+        if(itemTop < scrollTop+innerHeight+bound) {
+          if(itemBottom > scrollTop-bound){
             result.push(i);
           }
         } else {
+          /**
+           * this item top edge was below the viewport bottom 
+           * next item top edge must below the viewport bottom too
+           */
           break;
         }
       }
@@ -131,23 +140,24 @@ class ListView extends React.Component {
     }
 
     componentDidMount() {
-      this._getItemsOnViewPortIndex();
+      const { scrollDelay } = this.props;
+      this._updateRenderIndexes();
       window.addEventListener('scroll', ()=>{
         this.lastTime = this.lastTime || Date.now();
-        if(Date.now() - this.lastTime > 150) {
-          this._getItemsOnViewPortIndex();
+        if(Date.now() - this.lastTime > scrollDelay) {
+          this._updateRenderIndexes();
         }
       })
     }
 
     componentDidUpdate(){
-      this._getItemsOnViewPortIndex();
+      this._updateRenderIndexes();
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-      this.date = this.date || Date.now();
       const indexChange =  JSON.stringify(nextState.renderIndexes) !== JSON.stringify(this.state.renderIndexes);
       const itemSizeChange = nextProps.items.length !== this.props.items.length;
+      /* avoid dead loop for setState in componentDidUpdate */
       return indexChange || itemSizeChange;
     }
 
@@ -162,7 +172,7 @@ class ListView extends React.Component {
           <div className="list-view" style={listStyle}>
           {
             items.map((item, index)=>{
-              let show = renderIndexes.includes(index);
+              let show = renderIndexes.indexOf(index) !== -1;
               const itemStyle = {
                 position: 'absolute',
                 top: 271*index
@@ -182,6 +192,8 @@ ListView.propTypes = {
 }
 
 ListView.defaultProps = {
+  bound: 300, /* expand viewport top 300px and bottom 300px, will render more items */
+  scrollDelay: 150, /* every 150ms update render items when scrolling */
 }
 
 export {

@@ -18,7 +18,7 @@ class News extends React.Component {
             <a className="news" href={url} onClick={(event)=>{
               event.preventDefault();
               this.props.onClick(event);
-            }} style={{minHeight: 271, display: 'block'}} >
+            }}>
               <img src={imgsrc} />
               <p className="title">{title}</p>
               <small className="digest">{digest}</small>
