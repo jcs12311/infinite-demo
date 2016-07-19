@@ -77,10 +77,21 @@ const ListItemWrapper = Component => {
 
 
 class ListItem extends React.Component {
+
+  shouldComponentUpdate(nextProps){
+    console.log(this.rendered, '===');
+    if(!this.rendered){
+      this.rendered = this.props.show;
+    }
+    return !this.rendered || nextProps.show !== this.props.show
+  }
+
   render() {
-    const { show } = this.props;
+    const { show, style } = this.props;
     if(show) {
-      return this.props.children;
+      return <div style={style}>
+        { this.props.children }
+      </div>
     } else {
       return null
     }
@@ -147,16 +158,17 @@ class ListView extends React.Component {
         position: 'relative',
         height: items.length * 271
       }
-      console.log(renderIndexes);
       return (
           <div className="list-view" style={listStyle}>
           {
             items.map((item, index)=>{
               let show = renderIndexes.includes(index);
               const itemStyle = {
-                position: 'absolute'
+                position: 'absolute',
+                top: 271*index
               }
-              return <ListItem key={index} show={show}>
+              return <ListItem key={index} show={show} 
+                style={itemStyle}>
                 { item }
               </ListItem>
             })
