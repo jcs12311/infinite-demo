@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import $ from 'jquery';
 
-import ListItem from '../src/index';
+import { ListView, ListItem } from '../src/index';
 
 
 class News extends React.Component {
@@ -18,7 +18,7 @@ class News extends React.Component {
             <a className="news" href={url} onClick={(event)=>{
               event.preventDefault();
               this.props.onClick(event);
-            }}>
+            }} style={{minHeight: 271, display: 'block'}} >
               <img src={imgsrc} />
               <p className="title">{title}</p>
               <small className="digest">{digest}</small>
@@ -26,7 +26,7 @@ class News extends React.Component {
         )
     }
 }
-News = ListItem(News);
+// News = ListItem(News);
 
 class App extends React.Component {
     constructor(props) {
@@ -36,6 +36,10 @@ class App extends React.Component {
             p: 1,
             loading: false
         }
+    }
+    componentWillMount() {
+      console.time(`mount list`);
+      super.componentWillMount && super.componentWillMount();
     }
 
     componentDidMount() {
@@ -48,16 +52,17 @@ class App extends React.Component {
       //     this.getList();
       //   }
       // })
+      console.timeEnd(`mount list`);
     }
 
     componentWillUpdate(nextProps, nextState){
-      // if(nextState.newsData.length > this.state.newsData.length) {
-        console.time(`render ${this.props.pageSize} list`);
-      // }
+        console.time(`update list`);
+        super.componentWillUpdate && super.componentWillUpdate(nextProps, nextState);
     }
 
-    componentDidUpdate(nextProps) {
-      console.timeEnd(`render ${this.props.pageSize} list`);
+    componentDidUpdate(prevProps, prevState) {
+      console.timeEnd(`update list`);
+      super.componentDidUpdate && super.componentDidUpdate(prevProps, prevState);
     }
 
     getList() {
@@ -95,20 +100,18 @@ class App extends React.Component {
 
     render() {
       const { newsData } = this.state;
-        return (
-            <div className="list">
-              {
-                newsData.map((news, index)=>{
-                  return <News key={index} news={news} onClick={()=>{
-                    console.log('click');
-                    this.setState({
-                      update: true
-                    })
-                  }} />
-                })
-              }
-            </div>
-        )
+      const items = newsData.map((news, index)=>{
+        return <News key={index} news={news} onClick={()=>{
+          this.setState({
+            update: true
+          })
+        }} />
+      })
+      return (
+          <div className="list">
+            <ListView items={items} getItemHeight={(index)=>271} />
+          </div>
+      )
     }
 }
 

@@ -1,61 +1,67 @@
-/**
- * solve react render long list very slow
- *
- * only render when item on viewport
- * 1.using placeholder instead outside viewport element
- * shortage: 
- *   a.need to specify element height
- *   b.it still render slow even if using blank div as palceholder(maybe can 
- *   combine to one)
- *
- * 2.react canvas
- * shortage:
- *   a.must use inline style, spectify height etc
- *   b.scroll not smooth on mobile
- *   c.same origin policy
- *
- * 3.batch render - split big list to little list, render sequentially
- * shortage:
- *   a.can't record scroll position
- *   
- * 4.two direct scroll listview
- * shortage:
- *   a.
- * 
- */
-
 import React from 'react';
 import ReactDOM from 'react-dom';
+
 
 class PlaceholderComponent extends React.Component {
   render(){
     const { height } = this.props;
     const  style = {
-      height,
+      minHeight: height,
       width: '100%'
     };
-    return <div style={style}></div>
+    return <div style={style} onClick={this.props.onClick}></div>
   }
 }
 
-const ListItem = Component => {
+const ListItemWrapper = Component => {
     
     class ListItemComponent extends Component {
         constructor(props) {
             super(props);
             this.state = {
-                
+                onViewPort: false
             }
-            window.count = window.count !== undefined ? window.count +1 : 0;
-            this.id = window.count;
+            this._update = this._update.bind(this);
+            this._isOnViewPort = this._isOnViewPort.bind(this);
+        }
+
+        _isOnViewPort() {
+          let el = ReactDOM.findDOMNode(this);
+          let rect = el.getBoundingClientRect();
+          return rect.bottom > 0 && rect.top < window.innerHeight;
+        }
+
+        _update(){
+          if(this._isOnViewPort()){
+            this.setState({
+              onViewPort: true
+            })
+          }
+        }
+
+        shouldComponentUpdate(nextProps, nextState) {
+          if(this.state.onViewPort !== nextState.onViewPort){
+            return true;
+          } else {
+            return super.shouldComponentUpdate && 
+              super.shouldComponentUpdate(nextProps, nextState);
+          }
         }
 
         componentDidMount() {
-          let a = ReactDOM.findDOMNode(this);
+          this._update();
+          window.addEventListener('scroll', ()=>{
+            this.lastTime = this.lastTime || Date.now();
+            if(Date.now() - this.lastTime > 150) {
+              this._update();
+            }
+          })
+          super.componentDidMount && super.componentDidMount();
         }
     
         render() {
-          // if(this.id > 10) return <PlaceholderComponent height={300} />;
+          const { onViewPort } = this.state;
+          if(!onViewPort) return <PlaceholderComponent height={300} />;
           return super.render();
         }
     }
@@ -69,4 +75,105 @@ const ListItem = Component => {
     return ListItemComponent;
 }
 
-export default ListItem;
+
+class ListItem extends React.Component {
+  render() {
+    const { show } = this.props;
+    if(show) {
+      return this.props.children;
+    } else {
+      return null
+    }
+  }
+}
+
+class ListView extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            renderIndexes:[]
+        }
+        this._getItemsOnViewPortIndex = this._getItemsOnViewPortIndex.bind(this);
+    }
+
+    _getItemsOnViewPortIndex() {
+      let result = [];
+      const { items, getItemHeight } = this.props;
+      let itemTop = 0, // current item top edge 
+          itemBottom = 0; // current item bottom edge 
+      let scrollTop = document.body.scrollTop,
+          innerHeight = window.innerHeight;
+      for(let i = 0; i < items.length; i++) {
+        itemTop = itemBottom;
+        itemBottom += getItemHeight(i);
+        if(itemTop < scrollTop+innerHeight) {
+          if(itemBottom > scrollTop){
+            result.push(i);
+          }
+        } else {
+          break;
+        }
+      }
+      this.setState({
+        renderIndexes: result
+      })
+    }
+
+    componentDidMount() {
+      this._getItemsOnViewPortIndex();
+      window.addEventListener('scroll', ()=>{
+        this.lastTime = this.lastTime || Date.now();
+        if(Date.now() - this.lastTime > 150) {
+          this._getItemsOnViewPortIndex();
+        }
+      })
+    }
+
+    componentDidUpdate(){
+      this._getItemsOnViewPortIndex();
+    }
+
+    shouldComponentUpdate(nextProps, nextState) {
+      this.date = this.date || Date.now();
+      const indexChange =  JSON.stringify(nextState.renderIndexes) !== JSON.stringify(this.state.renderIndexes);
+      const itemSizeChange = nextProps.items.length !== this.props.items.length;
+      return indexChange || itemSizeChange;
+    }
+
+    render() {
+      const { items } = this.props;
+      const { renderIndexes } = this.state;
+      const listStyle = {
+        position: 'relative',
+        height: items.length * 271
+      }
+      console.log(renderIndexes);
+      return (
+          <div className="list-view" style={listStyle}>
+          {
+            items.map((item, index)=>{
+              let show = renderIndexes.includes(index);
+              const itemStyle = {
+                position: 'absolute'
+              }
+              return <ListItem key={index} show={show}>
+                { item }
+              </ListItem>
+            })
+          }
+          </div>
+      )
+    }
+}
+
+ListView.propTypes = {
+}
+
+ListView.defaultProps = {
+}
+
+export {
+  ListView,
+  ListItemWrapper
+}
+
