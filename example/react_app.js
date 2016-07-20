@@ -3,14 +3,21 @@ import ReactDOM from 'react-dom';
 import $ from 'jquery';
 
 import { ListView, ListItem } from '../src/index';
-
+import LazyLoad from 'react-lazyload';
 
 class News extends React.Component {
 
-    shouldComponentUpdate(nextProps) {
-      const shouldUpdate =  JSON.stringify(nextProps.news) !== JSON.stringify(this.props.news);
-      return shouldUpdate;
+    constructor() {
+      super();
+      this.state = {
+        h: 271
+      }
     }
+
+    // shouldComponentUpdate(nextProps) {
+    //   const shouldUpdate =  JSON.stringify(nextProps.news) !== JSON.stringify(this.props.news);
+    //   return shouldUpdate;
+    // }
 
     render() {
       const { url, imgsrc, title, digest } = this.props.news;
@@ -18,7 +25,10 @@ class News extends React.Component {
             <a className="news" href={url} onClick={(event)=>{
               event.preventDefault();
               this.props.onClick(event);
-            }}>
+              this.setState({
+                h: this.state.h === 271 ? 450 : 271
+              })
+            }} style={{minHeight: this.state.h, display: 'block'}}>
               <img src={imgsrc} />
               <p className="title">{title}</p>
               <small className="digest">{digest}</small>
@@ -101,19 +111,23 @@ class App extends React.Component {
     render() {
       const { newsData } = this.state;
       const items = newsData.map((news, index)=>{
-        return <News key={index} news={news} onClick={()=>{
+        return <LazyLoad height={271} once><News key={index} news={news} onClick={()=>{
           this.setState({
             update: true
           })
         }} />
+        </LazyLoad>
       })
       return (
           <div className="list">
-            <ListView items={items} getItemHeight={(index)=>271} />
+          {
+            items
+          }
           </div>
       )
     }
 }
+            // <ListView items={items} getItemHeight={(index)=>271} />
 
 App.propTypes = {
 }

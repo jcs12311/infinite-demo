@@ -98,25 +98,39 @@ class ListItem extends React.Component {
   }
 }
 
+/**
+ * props.items
+ *
+ * height -> window.scroll -> getIndex
+ * 
+ * 
+ */
 class ListView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            renderIndexes:[]
         }
-        this._updateRenderIndexes = this._updateRenderIndexes.bind(this);
+        this._getRenderInfo = this._getRenderInfo.bind(this);
     }
 
-    _updateRenderIndexes() {
+    _getRenderInfo() {
+      console.time('_getRenderInfo');
       let result = [];
       const { items, getItemHeight, bound } = this.props;
       let itemTop = 0, // current item top edge 
           itemBottom = 0; // current item bottom edge 
       let scrollTop = document.body.scrollTop,
           innerHeight = window.innerHeight;
+      // two scroll direction
       for(let i = 0; i < items.length; i++) {
         itemTop = itemBottom;
-        itemBottom += getItemHeight(i);
+        let el = ReactDOM.findDOMNode(this.refs[`listItem${i}`]);
+        if(el){
+          let rect = el.getBoundingClientRect();
+          itemBottom += rect.height;
+        } else {
+          itemBottom += getItemHeight(i);
+        }
         /** 
          * item top edge was over the viewport bottom
          * item bottom dege was below the viewport top
@@ -124,38 +138,36 @@ class ListView extends React.Component {
          */
         if(itemTop < scrollTop+innerHeight+bound) {
           if(itemBottom > scrollTop-bound){
-            result.push(i);
+            result[i] = {
+              top: itemTop
+            }
           }
-        } else {
-          /**
-           * this item top edge was below the viewport bottom 
-           * next item top edge must below the viewport bottom too
-           */
-          break;
         }
       }
+      console.timeEnd('_getRenderInfo');
       this.setState({
-        renderIndexes: result
+        renderItemsInfo: result,
+        listHeight: itemBottom
       })
     }
 
     componentDidMount() {
       const { scrollDelay } = this.props;
-      this._updateRenderIndexes();
+      this._getRenderInfo();
       window.addEventListener('scroll', ()=>{
         this.lastTime = this.lastTime || Date.now();
         if(Date.now() - this.lastTime > scrollDelay) {
-          this._updateRenderIndexes();
+          this._getRenderInfo();
         }
       })
     }
 
-    componentDidUpdate(){
-      this._updateRenderIndexes();
+    componentDidUpdate() {
+      this._getRenderInfo();
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-      const indexChange =  JSON.stringify(nextState.renderIndexes) !== JSON.stringify(this.state.renderIndexes);
+      const indexChange =  JSON.stringify(nextState.renderItemsInfo) !== JSON.stringify(this.state.renderItemsInfo);
       const itemSizeChange = nextProps.items.length !== this.props.items.length;
       /* avoid dead loop for setState in componentDidUpdate */
       return indexChange || itemSizeChange;
@@ -163,22 +175,28 @@ class ListView extends React.Component {
 
     render() {
       const { items } = this.props;
-      const { renderIndexes } = this.state;
+      const { renderItemsInfo, listHeight } = this.state;
       const listStyle = {
         position: 'relative',
-        height: items.length * 271
+        height: listHeight
       }
       return (
           <div className="list-view" style={listStyle}>
           {
             items.map((item, index)=>{
-              let show = renderIndexes.indexOf(index) !== -1;
-              const itemStyle = {
-                position: 'absolute',
-                top: 271*index
+              let show,
+                  itemStyle;
+
+              if(index in renderItemsInfo){
+                show = true;
+                itemStyle = {
+                  position: 'absolute',
+                  top: renderItemsInfo[index].top
+                }
               }
+
               return <ListItem key={index} show={show} 
-                style={itemStyle}>
+                style={itemStyle} ref={`listItem${index}`}>
                 { item }
               </ListItem>
             })
@@ -194,6 +212,7 @@ ListView.propTypes = {
 ListView.defaultProps = {
   bound: 300, /* expand viewport top 300px and bottom 300px, will render more items */
   scrollDelay: 150, /* every 150ms update render items when scrolling */
+  placeholder: true
 }
 
 export {
